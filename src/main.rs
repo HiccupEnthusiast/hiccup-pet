@@ -1,14 +1,26 @@
-use std::{collections::HashSet, env};
+mod commands;
 
+use std::{collections::{HashSet, HashMap}, env, sync::Arc};
+use tokio::sync::Mutex;
 use serenity::{
     async_trait,
-    framework::{standard::macros::group, StandardFramework},
-    model::{gateway::Ready, id::UserId},
+    client::bridge::gateway::ShardManager,
+    framework::{standard::macros::group, standard::StandardFramework},
+    model::{gateway::{GatewayIntents, Ready}, id::UserId},
     prelude::*,
 };
 
-#[group]
-struct General;
+use crate::commands::admin::*;
+
+struct ShardManagerContainer;
+impl TypeMapKey for ShardManagerContainer {
+    type Value = Arc<Mutex<ShardManager>>;
+}
+
+struct CommandCounter;
+impl TypeMapKey for CommandCounter {
+    type Value = HashMap<String, u64>;
+}
 
 struct Handler;
 
@@ -21,35 +33,44 @@ impl EventHandler for Handler {
         );
     }
 }
+
+#[group]
+#[commands(ping)]
+struct General;
+
 #[tokio::main]
 async fn main() {
-    // .env must be in ROOT dir, not in /src
     dotenv::dotenv().expect("Failed to load .env");
     let token = env::var("DTOKEN").expect("Expected token");
     let owners_ids = env::var("ADMINS").expect("Expected CSV");
 
     let mut owners = HashSet::new() as HashSet<UserId>;
-    for n in owners_ids.split(",") {
+    for n in owners_ids.split(","){
         owners.insert(UserId(n.parse().unwrap()));
     }
 
-    let intents = GatewayIntents::GUILDS 
-        | GatewayIntents::GUILD_MESSAGES
-        | GatewayIntents::GUILD_MESSAGE_TYPING
-        | GatewayIntents::DIRECT_MESSAGES;
-
     let framework = StandardFramework::new()
-        .configure(|c| c.owners(owners).prefix(":h"))
+        .configure(|c| c
+                   .with_whitespace(true)
+                   .prefix("h:")
+                   .delimiters(vec![", ", ","])
+                   .owners(owners))
         .group(&GENERAL_GROUP);
 
+    let intents = GatewayIntents::all();
     let mut client = Client::builder(&token, intents)
-        .framework(framework)
         .event_handler(Handler)
+        .framework(framework)
+        .type_map_insert::<CommandCounter>(HashMap::default())
         .await
         .expect("Err creating client");
-    
+
+    {
+        let mut data = client.data.write().await;
+        data.insert::<ShardManagerContainer>(Arc::clone(&client.shard_manager));
+    }
 
     if let Err(err) = client.start().await {
-        panic!("Error starting the client: {:?}", err);
-    };
+        println!("Error starting the client: {:?}", err);
+    }
 }
