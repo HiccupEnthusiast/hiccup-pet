@@ -22,7 +22,7 @@ features = [
     "utils",
     "rustls_backend",
 ]
-version = "0.10"
+version = "0.11"
 
 [dependencies.tokio]
 version = "1.0"
