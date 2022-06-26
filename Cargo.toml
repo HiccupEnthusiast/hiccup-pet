@@ -1,0 +1,29 @@
+[package]
+name = "hiccup_pet"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenv = "0.15.0"
+
+[dependencies.serenity]
+default-features = false
+features = [
+    "builder",
+    "client",
+    "framework",
+    "standard_framework",
+    "cache",
+    "gateway",
+    "http",
+    "model",
+    "utils",
+    "rustls_backend",
+]
+version = "0.10"
+
+[dependencies.tokio]
+version = "1.0"
+features = ["macros", "signal", "rt-multi-thread"]
