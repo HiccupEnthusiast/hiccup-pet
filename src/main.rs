@@ -11,6 +11,7 @@ use serenity::{
 };
 
 use crate::commands::admin::*;
+use crate::commands::userinfo::*;
 
 struct ShardManagerContainer;
 impl TypeMapKey for ShardManagerContainer {
@@ -35,8 +36,13 @@ impl EventHandler for Handler {
 }
 
 #[group]
-#[commands(ping)]
+#[commands(get_info)]
 struct General;
+
+#[group]
+#[summary = "Various admin/info commands meant only for staff eyes"]
+#[commands(check)]
+struct Admin;
 
 #[tokio::main]
 async fn main() {
@@ -55,7 +61,8 @@ async fn main() {
                    .prefix("h:")
                    .delimiters(vec![", ", ","])
                    .owners(owners))
-        .group(&GENERAL_GROUP);
+        .group(&GENERAL_GROUP)
+        .group(&ADMIN_GROUP);
 
     let intents = GatewayIntents::all();
     let mut client = Client::builder(&token, intents)
