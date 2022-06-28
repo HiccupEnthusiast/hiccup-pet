@@ -12,6 +12,7 @@ use serenity::{
 
 use crate::commands::admin::*;
 use crate::commands::userinfo::*;
+use crate::commands::imagen::*;
 
 struct ShardManagerContainer;
 impl TypeMapKey for ShardManagerContainer {
@@ -36,7 +37,7 @@ impl EventHandler for Handler {
 }
 
 #[group]
-#[commands(get_info)]
+#[commands(get_info, get_yuri)]
 struct General;
 
 #[group]
